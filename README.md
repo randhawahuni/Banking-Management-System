@@ -23,43 +23,43 @@ Creating the Database and Required Tables
 
 Once MySQL is set up, you need to create the database and tables. Use the MySQL command line or a GUI like phpMyAdmin. Here’s an example of how you might set it up:
 
-CREATE DATABASE bank_db;
-USE bank_db;
+    CREATE DATABASE bank_db;
+    USE bank_db;
+    
+    CREATE TABLE accounts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        account_type VARCHAR(50) NOT NULL,
+        balance DECIMAL(10, 2) NOT NULL,
+        session_token VARCHAR(255) UNIQUE NOT NULL
+    );
 
-CREATE TABLE accounts (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    username VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    account_type VARCHAR(50) NOT NULL,
-    balance DECIMAL(10, 2) NOT NULL,
-    session_token VARCHAR(255) UNIQUE NOT NULL
-);
-
-CREATE TABLE transactions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    transaction_type VARCHAR(50) NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    date DATETIME NOT NULL
-);
+    CREATE TABLE transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        transaction_type VARCHAR(50) NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        date DATETIME NOT NULL
+    );
 
 # 4. Configure Python Script
 
 Make sure to modify the database connection details in your Python script to match your MySQL configuration:
 
-mydb = mysql.connector.connect(
-    host="localhost",  # or your host
-    user="your_username",  # your MySQL username
-    password="your_password",  # your MySQL password
-    database="bank_db"  # the database name you created
-)
+    mydb = mysql.connector.connect(
+        host="localhost",  # or your host
+        user="your_username",  # your MySQL username
+        password="your_password",  # your MySQL password
+        database="bank_db"  # the database name you created
+    )
 
 # 5. Running the Script
 
 Open a command prompt or terminal, navigate to the directory containing your script, and run:
 
-python filename.py
+    python filename.py
 
 Replace filename.py with the name of your Python script.
 
