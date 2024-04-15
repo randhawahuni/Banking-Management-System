@@ -9,7 +9,7 @@ Ensure that Python is installed on your system. Python can be downloaded from py
 
 You'll need to install several Python packages that the script relies on, including mysql-connector-python for database operations and tkinter for the GUI (Tkinter is typically included with Python). Install them using pip:
 
-## pip install mysql-connector-python
+    pip install mysql-connector-python
 
 If you find that Tkinter is not installed, you can install it via your system's package manager:
 
