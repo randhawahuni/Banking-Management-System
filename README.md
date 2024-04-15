@@ -1,40 +1,68 @@
 # Banking-Management-System
-About
-__________
-In this project we have created a Virtual Bank using Python and MySQL. Data entered by the user are stored in MYSQL database in tabular form. Here  We have done CRUD Operation. The Best Part of this code is that it is 100 % user friendly because of excess use of exceptional handling.
+To run the provided Python script that integrates a GUI-based banking system using Tkinter and a MySQL database, you will need to follow several steps to ensure everything is correctly set up. Here is a comprehensive guide on what you need to do:
 
-This project is designed for The Bank Staffs to keep the record of their customers. Only authorized Users can have the accessibility to the program. User after Logging in have the support to display all records, and modify it accordingly. If someone is not having Login Id, password he/she could make a new id. Further it can also check overall record of a local customer or full detail of a single a/c as per transactions, create a new record for new customer, Update an old customer record, Delete a record of a customer and Update Loans of the customer. Python is used as Front End and MySQL is used as Back End.
+# 1. Install Python
 
-*Requirement
-______________________________ 
+Ensure that Python is installed on your system. Python can be downloaded from python.org. Make sure to add Python to your system's PATH during the installation.
 
-1) Python Latest Version 
-2) Visual Code
-3) Mysql
-4) Python My SQL Converter : Most Important
+# 2. Install Required Packages
 
-*Module Used In python Code
-______________________________
+You'll need to install several Python packages that the script relies on, including mysql-connector-python for database operations and tkinter for the GUI (Tkinter is typically included with Python). Install them using pip:
 
-1) datetime
-2) mysql.connector
+## pip install mysql-connector-python
 
-*About Mysql Code
-__________________________
+If you find that Tkinter is not installed, you can install it via your system's package manager:
 
-1) Database used here is Hubnet
-2) address = local
-3) user=root
-4) password=12345678
- 
-UserName is the Primary Key in Bank Table  and UserName1 is the Foreign key in  Transaction Table.
+    For Ubuntu: sudo apt-get install python3-tk
+    For Windows, Tkinter should be included with the Python installation.
 
-Suggestion: Run Bank-Project.py Code in IDLE.
+# 3. Set Up MySQL Database
 
-Before Running This Code in Your System Make Sure you have created the bank and transactions Table.
+You need a running MySQL server. You can install MySQL Server from the MySQL official site or use services like XAMPP or WAMP if you are on Windows.
+Creating the Database and Required Tables
 
-*My Sql Code for Creating Table Bank
-create table bank(name varchar(30), UserName varchar(30),password tinytext , Date_of_birth date, address varchar(40) ,Mobile_Number varchar(30) ,Aadhar_no varchar(30), Balance int);
+Once MySQL is set up, you need to create the database and tables. Use the MySQL command line or a GUI like phpMyAdmin. Here’s an example of how you might set it up:
 
-*My Sql code for creating Table Transaction:
-create table Transaction(credited int , debited int , username1 varchar(20), foreign key(username1) references bank(username));
+CREATE DATABASE bank_db;
+USE bank_db;
+
+CREATE TABLE accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    account_type VARCHAR(50) NOT NULL,
+    balance DECIMAL(10, 2) NOT NULL,
+    session_token VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    date DATETIME NOT NULL
+);
+
+# 4. Configure Python Script
+
+Make sure to modify the database connection details in your Python script to match your MySQL configuration:
+
+mydb = mysql.connector.connect(
+    host="localhost",  # or your host
+    user="your_username",  # your MySQL username
+    password="your_password",  # your MySQL password
+    database="bank_db"  # the database name you created
+)
+
+# 5. Running the Script
+
+Open a command prompt or terminal, navigate to the directory containing your script, and run:
+
+python filename.py
+
+Replace filename.py with the name of your Python script.
+
+# 6. Using the Application
+
+When you run the script, a GUI window should appear where you can interact with the application. Start by creating an account, logging in, and then exploring the functionalities like depositing, withdrawing, and transferring funds.
