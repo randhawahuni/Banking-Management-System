@@ -1,18 +1,120 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from datetime import datetime
 from hashlib import sha256
 from secrets import token_hex
-from exceptions import ValueError, TypeError, IntegrityError
+
+# For database operations, make sure to import mysql.connector and any specific exceptions it defines
+import mysql.connector
+from mysql.connector import IntegrityError
 
 # Database connection
 mydb = mysql.connector.connect(
     host="localhost",
-    user="your_username",
-    password="your_password",
-    database="bank_db"
+    user="root",
+    password="admin",
+    database="banking_system"
 )
 mycursor = mydb.cursor()
+
+class BankingGUI:
+    def __init__(self, master):
+        self.master = master
+        master.title("Banking System")
+
+        # Create the login frame
+        self.login_frame = ttk.Frame(master)
+        self.login_frame.pack(pady=20)
+
+        self.username_label = ttk.Label(self.login_frame, text="Username:")
+        self.username_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+        self.username_entry = ttk.Entry(self.login_frame)
+        self.username_entry.grid(row=0, column=1, padx=10, pady=5)
+
+        self.password_label = ttk.Label(self.login_frame, text="Password:")
+        self.password_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+
+        self.password_entry = ttk.Entry(self.login_frame, show="*")
+        self.password_entry.grid(row=1, column=1, padx=10, pady=5)
+
+        self.login_button = ttk.Button(self.login_frame, text="Login", command=self.login)
+        self.login_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+        self.create_account_button = ttk.Button(self.login_frame, text="Create Account", command=self.create_account)
+        self.create_account_button.grid(row=3, column=0, columnspan=2, padx=10, pady=5)
+
+        # Create the main application frame
+        self.app_frame = ttk.Frame(master)
+
+    def login(self):
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+        session_token = authenticate_user(username, password)
+        if session_token:
+            self.login_frame.pack_forget()
+            self.app_frame.pack(pady=20)
+            self.create_widgets()
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password.")
+
+    def create_account(self):
+        # Call the create_account function without arguments
+        session_token = create_account()
+
+        if session_token:
+            messagebox.showinfo("Account Created", "Account created successfully.")
+            # Add additional functionality here if needed
+        else:
+            messagebox.showerror("Account Creation Failed", "Failed to create account.")
+
+    def create_widgets(self):
+        # Functionality buttons
+        self.deposit_button = ttk.Button(self.app_frame, text="Deposit", command=self.deposit)
+        self.deposit_button.grid(row=0, column=0, padx=10, pady=10)
+
+        self.withdraw_button = ttk.Button(self.app_frame, text="Withdraw", command=self.withdraw)
+        self.withdraw_button.grid(row=0, column=1, padx=10, pady=10)
+
+        self.transfer_button = ttk.Button(self.app_frame, text="Transfer", command=self.transfer)
+        self.transfer_button.grid(row=0, column=2, padx=10, pady=10)
+
+        self.transactions_button = ttk.Button(self.app_frame, text="View Transactions", command=self.view_transactions)
+        self.transactions_button.grid(row=1, column=0, padx=10, pady=10)
+
+        self.balance_button = ttk.Button(self.app_frame, text="View Balance", command=self.view_balance)
+        self.balance_button.grid(row=1, column=1, padx=10, pady=10)
+
+        self.logout_button = ttk.Button(self.app_frame, text="Logout", command=self.logout)
+        self.logout_button.grid(row=1, column=2, padx=10, pady=10)
+
+    def deposit(self):
+        amount = float(input("Enter the amount to deposit: "))
+        session_token = input("Enter your session token: ")
+        deposit_cash(session_token, amount)
+
+    def withdraw(self):
+        amount = float(input("Enter the amount to withdraw: "))
+        session_token = input("Enter your session token: ")
+        withdraw_cash(session_token, amount)
+
+    def transfer(self):
+        recipient_username = input("Enter recipient username: ")
+        amount = float(input("Enter the amount to transfer: "))
+        session_token = input("Enter your session token: ")
+        transfer_funds(session_token, recipient_username, amount)
+
+    def view_transactions(self):
+        session_token = input("Enter your session token: ")
+        view_transactions(session_token)
+
+    def view_balance(self):
+        session_token = input("Enter your session token: ")
+        view_balance(session_token)
+
+    def logout(self):
+        self.app_frame.pack_forget()
+        self.login_frame.pack(pady=20)
 
 # Account Management
 def create_account():
@@ -51,78 +153,6 @@ def create_account():
     except Exception as e:
         print("An error occurred:", e)
         return None
-
-def edit_account(session_token):
-    print("*** Edit Account ***")
-    try:
-        # Retrieve account details
-        sql = "SELECT * FROM accounts WHERE session_token = %s"
-        val = (session_token,)
-        mycursor.execute(sql, val)
-        account = mycursor.fetchone()
-
-        if account:
-            print("Current Account Details:")
-            print("Name:", account[1])
-            print("Username:", account[2])
-            print("Account Type:", account[4])
-            print("Balance:", account[5])
-
-            print("\nWhat would you like to update?")
-            print("1. Name")
-            print("2. Password")
-            print("3. Account Type")
-            choice = input("Enter your choice (1/2/3): ")
-
-            if choice == '1':
-                new_name = input("Enter new name: ")
-                sql = "UPDATE accounts SET name = %s WHERE session_token = %s"
-                val = (new_name, session_token)
-                mycursor.execute(sql, val)
-                mydb.commit()
-                print("Name updated successfully.")
-            elif choice == '2':
-                new_password = input("Enter new password: ")
-                hashed_password = sha256(new_password.encode()).hexdigest()
-                sql = "UPDATE accounts SET password = %s WHERE session_token = %s"
-                val = (hashed_password, session_token)
-                mycursor.execute(sql, val)
-                mydb.commit()
-                print("Password updated successfully.")
-            elif choice == '3':
-                new_account_type = input("Enter new account type (Personal/Business): ")
-                sql = "UPDATE accounts SET account_type = %s WHERE session_token = %s"
-                val = (new_account_type, session_token)
-                mycursor.execute(sql, val)
-                mydb.commit()
-                print("Account type updated successfully.")
-            else:
-                print("Invalid choice.")
-        else:
-            print("Invalid session token.")
-    except Exception as e:
-        print("An error occurred:", e)
-
-def close_account(session_token):
-    print("*** Close Account ***")
-    try:
-        # Retrieve account details
-        sql = "SELECT * FROM accounts WHERE session_token = %s"
-        val = (session_token,)
-        mycursor.execute(sql, val)
-        account = mycursor.fetchone()
-
-        if account:
-            # Delete the account
-            sql = "DELETE FROM accounts WHERE session_token = %s"
-            val = (session_token,)
-            mycursor.execute(sql, val)
-            mydb.commit()
-            print("Account closed successfully.")
-        else:
-            print("Invalid session token.")
-    except Exception as e:
-        print("An error occurred:", e)
 
 # Financial Transactions
 def deposit_cash(session_token, amount):
@@ -232,7 +262,7 @@ def transfer_funds(session_token, recipient_username, amount):
     except Exception as e:
         print("An error occurred:", e)
 
-def view_transactions(session_token, start_date=None, end_date=None, transaction_type=None):
+def view_transactions(session_token):
     try:
         # Retrieve account details
         sql = "SELECT * FROM accounts WHERE session_token = %s"
@@ -250,12 +280,6 @@ def view_transactions(session_token, start_date=None, end_date=None, transaction
             if transactions:
                 print("Transaction History:")
                 for transaction in transactions:
-                    if start_date and transaction[3] < start_date:
-                        continue
-                    if end_date and transaction[3] > end_date:
-                        continue
-                    if transaction_type and transaction[2] != transaction_type:
-                        continue
                     print(f"Date: {transaction[3]}, Type: {transaction[2]}, Amount: {transaction[4]}")
             else:
                 print("No transactions found.")
@@ -264,58 +288,15 @@ def view_transactions(session_token, start_date=None, end_date=None, transaction
     except Exception as e:
         print("An error occurred:", e)
 
-# Account Services
-def view_account_details(session_token):
+def view_balance(session_token):
     try:
         # Retrieve account details
-        sql = "SELECT * FROM accounts WHERE session_token = %s"
+        sql = "SELECT balance FROM accounts WHERE session_token = %s"
         val = (session_token,)
         mycursor.execute(sql, val)
-        account = mycursor.fetchone()
+        balance = mycursor.fetchone()[0]
 
-        if account:
-            print("Account Details:")
-            print("Name:", account[1])
-            print("Username:", account[2])
-            print("Account Type:", account[4])
-            print("Balance:", account[5])
-        else:
-            print("Invalid session token.")
-    except Exception as e:
-        print("An error occurred:", e)
-
-def request_service(session_token):
-    try:
-        # Retrieve account details
-        sql = "SELECT * FROM accounts WHERE session_token = %s"
-        val = (session_token,)
-        mycursor.execute(sql, val)
-        account = mycursor.fetchone()
-
-        if account:
-            print("Available Services:")
-            print("1. Checkbook")
-            print("2. Debit/Credit Card")
-            print("3. Recurring Payments")
-            print("4. Direct Debits")
-            choice = input("Enter your choice (1/2/3/4): ")
-
-            if choice == '1':
-                # Process checkbook request
-                print("Checkbook request submitted.")
-            elif choice == '2':
-                # Process debit/credit card request
-                print("Debit/Credit card request submitted.")
-            elif choice == '3':
-                # Process recurring payments request
-                print("Recurring payments request submitted.")
-            elif choice == '4':
-                # Process direct debits request
-                print("Direct debits request submitted.")
-            else:
-                print("Invalid choice.")
-        else:
-            print("Invalid session token.")
+        print(f"Your current balance is: {balance}")
     except Exception as e:
         print("An error occurred:", e)
 
@@ -345,56 +326,6 @@ def authenticate_user(username, password):
     except Exception as e:
         print("An error occurred:", e)
         return None
-
-class BankingGUI:
-    def __init__(self, master):
-        self.master = master
-        master.title("Banking System")
-
-        # Create the login frame
-        self.login_frame = tk.Frame(master)
-        self.login_frame.pack(pady=20)
-
-        self.username_label = tk.Label(self.login_frame, text="Username:")
-        self.username_label.grid(row=0, column=0, padx=10, pady=10)
-
-        self.username_entry = tk.Entry(self.login_frame)
-        self.username_entry.grid(row=0, column=1, padx=10, pady=10)
-
-        self.password_label = tk.Label(self.login_frame, text="Password:")
-        self.password_label.grid(row=1, column=0, padx=10, pady=10)
-
-        self.password_entry = tk.Entry(self.login_frame, show="*")
-        self.password_entry.grid(row=1, column=1, padx=10, pady=10)
-
-        self.login_button = tk.Button(self.login_frame, text="Login", command=self.login)
-        self.login_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
-
-        # Create the main application frame
-        self.app_frame = tk.Frame(master)
-
-        # Add your banking system functionality here
-        # Example: Create an account
-        self.create_account_button = tk.Button(self.app_frame, text="Create Account", command=self.create_account)
-        self.create_account_button.pack(pady=10)
-
-    def login(self):
-        username = self.username_entry.get()
-        password = self.password_entry.get()
-        session_token = authenticate_user(username, password)
-        if session_token:
-            self.login_frame.pack_forget()
-            self.app_frame.pack(pady=20)
-        else:
-            print("Login failed.")
-
-    def create_account(self):
-        session_token = create_account()
-        if session_token:
-            print("Account created successfully.")
-            # Add more functionality here
-        else:
-            print("Account creation failed.")
 
 root = tk.Tk()
 banking_gui = BankingGUI(root)
